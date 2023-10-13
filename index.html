@@ -3,19 +3,32 @@
     <head>
         <meta charset="utf-8">
         <title>Elitarne robaczki</title>
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="style2.css">
         <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
         <!-- <script src="script.js"></script> -->
     </head>
     <body>
         <div id="app">
             <div class="naglowek">
-                <span><a class="title" href="https://dzban.eu/">Elitarne robaczki</a></span>
+                <span><a class="title" href="http://dzban.eu/">Elitarne robaczki</a></span>
                 <div class="menu">
-                    <span><a class="calendarButton" href="https://dzban.eu/">kalendarz</a></span>
-                    <span><a class="moneyButton" href="https://dzban.eu/money/">zbiórki</a></span>
+                    <span><a class="calendarButton" href="http://dzban.eu/">kalendarz</a></span>
+                    <span><a class="moneyButton" href="http://dzban.eu/money/">zbiórki</a></span>
                 </div>
             </div>
+
+            <table>
+                <tr>
+                    <th>Imię i nazwisko</th>
+                    <th v-for="q in length">{{NazwyZbiorek(q)}}</th>
+                </tr>
+                <tr v-for="d in numberOfNames">
+                  <th>{{Name(d)}}</th>
+                  <td v-for="e in length">{{Wplaty(e, d)}}</td>
+                </tr>
+            </table> 
+
+
         </div>
     
         <script>
@@ -23,12 +36,77 @@
                 el: '#app',
                 setup() {
                     return {
+                        SHEET_ID: "1lBWra9GIa5kedaEg1yY0MV64N7T7ITO5axuoYRzg6Ho",
+                        SHEET_TITLE: 'money',
+                        SHEET_RANGE: 'A:AH',
+                        FULL_URL:null,
+                        dane:null,
+                        length: Vue.ref(0),
+                        numberOfNames: Vue.ref(0),
+                        d: null,
 
                     }
                 },
 
                 methods:{
+                    downloadInfo()
+                    {
+                        console.log("start download");
+                        this.FULL_URL = 'https://docs.google.com/spreadsheets/d/'+this.SHEET_ID + '/gviz/tq?sheet=' + this.SHEET_TITLE + '&range=' + 
+                                    this.SHEET_RANGE + '&embedded=true',
+                        fetch(this.FULL_URL)
+                        .then(res => res.text())
+                        .then(rep => {
+                            this.dane = JSON.parse(rep.substr(47).slice(0,-2))
+                            this.length = this.dane.table.rows.length;
+                            this.numberOfNames = 33;
+                            
+                            console.log(this.dane);
+                            // console.log("then A");
+                        })
+                        // .then(x=>{
+                        // })
+
+                        console.log("end download");
+
+                    },
+
+                    Name(number)
+                    {
+                        if(this.dane == null)
+                        {
+                            return null;
+                        }
+                        // console.log(number);
+                        // console.log(this.dane);
+                        return this.dane.table.cols[number].label;
+                    },
+
+                    Wplaty(e, member)
+                    {
+                        if(this.dane == null)
+                        {
+                            return null;
+                        }
+                        return this.dane.table.rows[e-1].c[member].f;
+
+                    },
+
+                    NazwyZbiorek(q)
+                    {
+                        if(this.dane == null)
+                        {
+                            return null;
+                        }
+                        // console.log(this.dane.table.rows[q-1].c[0].v)
+                        return this.dane.table.rows[q-1].c[0].v;
+                    }
                     
+                },
+
+                beforeMount() { 
+                    //  console.log("siema");
+                    this.downloadInfo();                  
                 }
 
             });
